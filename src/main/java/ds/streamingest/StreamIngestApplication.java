@@ -15,18 +15,22 @@ public class StreamIngestApplication {
 		SpringApplication.run(StreamIngestApplication.class, args);
 	}
 	
-	@Bean
-	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
-		return args -> {
-
-			System.out.println("Let's inspect the beans provided by Spring Boot:");
+	private void dumpBeans(ApplicationContext ctx) {
+		System.out.println("Let's inspect the beans provided by Spring Boot:");
 
 			String[] beanNames = ctx.getBeanDefinitionNames();
 			Arrays.sort(beanNames);
 			for (String beanName : beanNames) {
 				System.out.println(beanName);
 			}
+	}
+	
+	@Bean
+	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
+		return args -> {
 
+			//dumpBeans(ctx);
+			System.out.println("initialize the repo here");
 		};
 	}
 
