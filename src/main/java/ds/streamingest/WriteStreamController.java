@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 
 
 @RestController
-public class IngestController {
-    private final static Logger logger = LoggerFactory.getLogger(IngestController.class);
+public class WriteStreamController {
+    private final static Logger logger = LoggerFactory.getLogger(WriteStreamController.class);
 
     @Autowired
     private PartitionKeyExtractorDescRepo repository;

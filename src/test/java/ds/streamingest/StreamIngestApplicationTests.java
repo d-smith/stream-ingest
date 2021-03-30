@@ -12,7 +12,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -23,11 +22,11 @@ class StreamIngestApplicationTests {
 	private MockMvc mockMvc;
 
 	@Autowired
-	private IngestController ingestController;
+	private WriteStreamController writeStreamController;
 
 	@Test
 	void contextLoads() {
-		assertThat(ingestController).isNotNull();
+		assertThat(writeStreamController).isNotNull();
 	}
 
 	@Test
