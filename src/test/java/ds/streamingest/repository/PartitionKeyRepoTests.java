@@ -2,13 +2,11 @@ package ds.streamingest.repository;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import org.springframework.boot.test.context.SpringBootTest;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import ds.streamingest.model.*;
 
-@SpringBootTest
+//@SpringBootTest
 public class PartitionKeyRepoTests {
-    
-
 
     @Test
     public void storeAndGet() {
@@ -17,5 +15,6 @@ public class PartitionKeyRepoTests {
         repository.store(d);
         PartitionKeyExtractorDescription retrieved = repository.retrieve("foo");
         assertNotNull(retrieved);
+        assertEquals(retrieved.getExtractionContext(), "PKEY_HEADER");
     }
 }

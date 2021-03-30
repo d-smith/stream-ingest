@@ -1,4 +1,4 @@
-package ds.streamingest;
+package ds.streamingest.model;
 
 public class WriteStreamRequest {
     private final String data;

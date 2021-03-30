@@ -8,6 +8,7 @@ import ds.streamingest.model.PartitionKeyExtractorDescription;
 
 import org.springframework.stereotype.Repository;
 
+@Repository
 public class PartitionKeyExtractorDescRepo implements ObjectRepository<PartitionKeyExtractorDescription> {
 
     private Map<String, PartitionKeyExtractorDescription> repository;
