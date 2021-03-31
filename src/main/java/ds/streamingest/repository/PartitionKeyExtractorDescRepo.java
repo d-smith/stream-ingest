@@ -6,10 +6,14 @@ import java.util.Map;
 
 import ds.streamingest.model.PartitionKeyExtractorDescription;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public class PartitionKeyExtractorDescRepo implements ObjectRepository<PartitionKeyExtractorDescription> {
+
+	private final static Logger logger = LoggerFactory.getLogger(PartitionKeyExtractorDescRepo.class);
 
     private Map<String, PartitionKeyExtractorDescription> repository;
 
