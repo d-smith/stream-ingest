@@ -46,6 +46,7 @@ public class MappedIngestController {
                                                            Map<String, String> headers,
                                                            JsonNode jsonData) {
         String key = keyExtractorDesc.getExtractionContext();
+        logger.info(headers.toString());
         logger.info("looking for header value for {}", key);
 
         String keyValue = headers.get(key);

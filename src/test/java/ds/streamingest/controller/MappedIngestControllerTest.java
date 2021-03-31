@@ -36,11 +36,11 @@ public class MappedIngestControllerTest {
     @Test
     public void shouldMapKey() throws Exception {
 
-        when(repository.retrieve("mappedStream1")).thenReturn(new PartitionKeyExtractorDescription("mappingStream1", PartitionKeyExtractorTypes.HEADER, "PKEY"));
+        when(repository.retrieve("mappedStream1")).thenReturn(new PartitionKeyExtractorDescription("mappingStream1", PartitionKeyExtractorTypes.HEADER, "pkey"));
 
         this.mockMvc.perform(post("/mappedIngest/mappedStream1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("PKEY","k2")
+                .header("pkey","k2")
                 .content("{\"k1\":{\"o1\":\"xxx\"}, \"k2\":\"v2\"}"))
                 .andDo(print())
                 .andExpect(status().isOk())
