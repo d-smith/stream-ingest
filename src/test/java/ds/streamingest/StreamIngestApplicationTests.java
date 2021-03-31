@@ -1,5 +1,6 @@
 package ds.streamingest;
 
+import ds.streamingest.controller.WriteStreamController;
 import ds.streamingest.model.WriteStreamRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

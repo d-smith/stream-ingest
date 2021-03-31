@@ -1,4 +1,4 @@
-package ds.streamingest;
+package ds.streamingest.controller;
 
 import ds.streamingest.model.WriteStreamRequest;
 import ds.streamingest.repository.PartitionKeyExtractorDescRepo;
