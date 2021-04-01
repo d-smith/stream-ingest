@@ -3,6 +3,7 @@ package ds.streamingest.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import ds.streamingest.model.PartitionKeyExtractorDescription;
 import ds.streamingest.repository.PartitionKeyExtractorDescRepo;
+import ds.streamingest.service.StreamWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.Map;
 
 @RestController
@@ -18,6 +20,9 @@ public class MappedIngestController {
 
     @Autowired
     private PartitionKeyExtractorDescRepo repository;
+
+    @Autowired
+    private StreamWriter streamWriter;
 
     @PostMapping("/mappedIngest/{streamName}")
     public ResponseEntity<String> ingest(@PathVariable String streamName,
@@ -44,7 +49,7 @@ public class MappedIngestController {
     private ResponseEntity<String> processHeaderExtraction(PartitionKeyExtractorDescription keyExtractorDesc,
                                                            String streamName,
                                                            Map<String, String> headers,
-                                                           JsonNode jsonData) {
+                                                           JsonNode jsonData) throws IOException {
         String key = keyExtractorDesc.getExtractionContext();
         logger.info(headers.toString());
         logger.info("looking for header value for {}", key);
@@ -57,6 +62,8 @@ public class MappedIngestController {
 
         logger.info("write to stream {} with partition key {} and payload {}",
                 streamName, key, jsonData.toString());
+
+        streamWriter.writeToStream(streamName, key, jsonData.binaryValue());
 
         return new ResponseEntity<>("got it", HttpStatus.OK);
     }
