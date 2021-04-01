@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @RestController
@@ -63,7 +64,8 @@ public class MappedIngestController {
         logger.info("write to stream {} with partition key {} and payload {}",
                 streamName, key, jsonData.toString());
 
-        streamWriter.writeToStream(streamName, key, jsonData.binaryValue());
+        //TODO - what's the best way to extract the bytes for the payload?
+        streamWriter.writeToStream(streamName, key, jsonData.toString().getBytes(StandardCharsets.UTF_8));
 
         return new ResponseEntity<>("got it", HttpStatus.OK);
     }

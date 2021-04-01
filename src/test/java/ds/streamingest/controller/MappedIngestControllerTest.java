@@ -4,6 +4,7 @@ import ds.streamingest.model.PartitionKeyExtractorDescription;
 import ds.streamingest.model.PartitionKeyExtractorTypes;
 import ds.streamingest.model.WriteStreamRequest;
 import ds.streamingest.repository.PartitionKeyExtractorDescRepo;
+import ds.streamingest.service.StreamWriter;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,9 @@ public class MappedIngestControllerTest {
 
     @MockBean
    PartitionKeyExtractorDescRepo repository;
+
+    @MockBean
+    StreamWriter streamWriter;
 
     @Autowired
     private MockMvc mockMvc;
