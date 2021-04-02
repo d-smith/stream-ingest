@@ -45,6 +45,8 @@ public class StreamIngestApplication {
 			if(repository != null) {
 				logger.info("Initializing in memory repository.");
 				repository.store(new PartitionKeyExtractorDescription("s1", PartitionKeyExtractorTypes.HEADER, "s1key"));
+				repository.store(new PartitionKeyExtractorDescription("s2", PartitionKeyExtractorTypes.BODY, "/foo/foopart1"));
+
 			}
 		};
 	}

@@ -74,6 +74,19 @@ public class MappedIngestController {
                                                            String streamName,
                                                            Map<String, String> headers,
                                                            JsonNode jsonData) {
-        return new ResponseEntity<>("not implemented", HttpStatus.NOT_IMPLEMENTED);
+
+        //TODO - can we mask all the values in a json object to avoid logging sensitive data?
+        logger.info("extract value at {} from {}", keyExtractorDesc.getExtractionContext(), jsonData);
+
+        JsonNode keyNode = jsonData.at(keyExtractorDesc.getExtractionContext());
+        if(keyNode == null) {
+            logger.error("Unable to extract value from body to use as partition key");
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        logger.info("extracted {}", keyNode.asText());
+
+        streamWriter.writeToStream(streamName, keyNode.asText(), jsonData.toString().getBytes(StandardCharsets.UTF_8));
+
+        return new ResponseEntity<>("got it", HttpStatus.OK);
     }
 }

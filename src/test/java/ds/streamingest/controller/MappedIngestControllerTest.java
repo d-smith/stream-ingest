@@ -54,5 +54,40 @@ public class MappedIngestControllerTest {
 
     //TODO - write tests for missing mapping spec, no header as per mapping
 
+    @Test
+    public void shouldMapStringAttribute() throws Exception {
+        when(repository.retrieve("mappedStream2")).thenReturn(new PartitionKeyExtractorDescription("mappedStream2", PartitionKeyExtractorTypes.BODY, "/foo"));
+
+        this.mockMvc.perform(post("/mappedIngest/mappedStream2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"foo\":\"fooval\", \"bar\":\"barval\", \"baz\":\"bazval\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("got it"));
+    }
+
+    @Test
+    public void shouldMapIntegerAttribute() throws Exception {
+        when(repository.retrieve("mappedStream3")).thenReturn(new PartitionKeyExtractorDescription("mappedStream3", PartitionKeyExtractorTypes.BODY, "/foo"));
+
+        this.mockMvc.perform(post("/mappedIngest/mappedStream3")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"foo\":123, \"bar\":\"barval\", \"baz\":\"bazval\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("got it"));
+    }
+
+    @Test
+    public void shouldMapPath() throws Exception {
+        when(repository.retrieve("mappedStream4")).thenReturn(new PartitionKeyExtractorDescription("mappedStream4", PartitionKeyExtractorTypes.BODY, "/foo/foopart1"));
+
+        this.mockMvc.perform(post("/mappedIngest/mappedStream4")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"foo\":{\"foopart1\":1, \"foopart2\":2}, \"bar\":\"barval\", \"baz\":\"bazval\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("got it"));
+    }
 
 }
