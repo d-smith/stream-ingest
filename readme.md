@@ -1,7 +1,23 @@
 # spring ingest
 
+This project illustrates a couple ways of providing a simple data ingest API 
+that uses Kinesis as the underlying stream provider.
+
+Two styles of interface are provided: a simple wrapper on top of kinesis, 
+and a mapping API that uses the resource context, and some metadata to determine
+which stream to write to, and how to extract the partition key value from the 
+API call.
+
+To build and run:
+
 ```
 mvn clean spring-boot:run
+```
+
+Unit tests:
+
+```
+mvn clean test
 ```
 
 Actuator endpoint:
@@ -12,10 +28,10 @@ curl localhost:8080/actuator/info
 ```
 
 
-Ingest style 1 - api consumer understands downstream mapping
+Ingest style 1 - wrapper style
 
 ```
-curl localhost:8080/writeToStream -X POST -d '{"streamName":"larry", "key":"k","data":"v"}' -H 'Content-Type: application/json'
+curl localhost:8080/writeToStream -X POST -d '{"streamName":"s1", "key":"k","data":"v"}' -H 'Content-Type: application/json'
 ```
 
 Ingest style 2 - mapped ingest, partition key via http header
