@@ -64,3 +64,28 @@ Clean Up
 aws kinesis delete-stream --stream-name s1
 aws kinesis delete-stream --stream-name s2
 ```
+
+Minimal KPL Producer IAM Policy
+
+```console
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "kinesis:PutRecord",
+                "kinesis:SubscribeToShard",
+                "cloudwatch:PutMetricData",
+                "kinesis:DescribeStreamSummary",
+                "kinesis:ListShards",
+                "kinesis:PutRecords",
+                "kinesis:DescribeStreamConsumer",
+                "kinesis:DescribeStream",
+                "kinesis:RegisterStreamConsumer"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
