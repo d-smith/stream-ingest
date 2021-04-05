@@ -89,3 +89,14 @@ Minimal KPL Producer IAM Policy
     ]
 }
 ```
+CloudWatch
+
+```
+aws cloudwatch list-metrics --namespace "AWS/Kinesis" --dimensions Name=StreamName,Value=s1
+
+
+aws cloudwatch get-metric-statistics --namespace "AWS/Kinesis" \
+--metric-name "PutRecords.Bytes" --dimensions Name=StreamName,Value=s1 \
+--start-time "`date -v -10M`" --end-time "`date`" --period 60 --statistics Sum
+
+```
