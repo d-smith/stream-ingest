@@ -1,5 +1,7 @@
 # spring ingest
 
+## Overview
+
 This project illustrates a couple ways of providing a simple data ingest API 
 that uses Kinesis as the underlying stream provider.
 
@@ -51,6 +53,8 @@ export AWS_PROFILE=xxxx
 export AWS_REGION=xxxx
 ```
 
+## Misc AWS Concerns
+
 Create a Stream
 
 ```
@@ -89,7 +93,7 @@ Minimal KPL Producer IAM Policy
     ]
 }
 ```
-CloudWatch
+## CloudWatch
 
 ```
 aws cloudwatch list-metrics --namespace "AWS/Kinesis" --dimensions Name=StreamName,Value=s1
@@ -100,3 +104,7 @@ aws cloudwatch get-metric-statistics --namespace "AWS/Kinesis" \
 --start-time "`date -v -10M`" --end-time "`date`" --period 60 --statistics Sum
 
 ```
+
+## Fire Hose
+
+
