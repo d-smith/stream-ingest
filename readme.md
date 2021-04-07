@@ -107,4 +107,19 @@ aws cloudwatch get-metric-statistics --namespace "AWS/Kinesis" \
 
 ## Fire Hose
 
+Use [this project](https://github.com/d-smith/kinesis-firehose-s3) to set up a firehose.
 
+```
+aws cloudformation create-stack --stack-name archiveFirehose \
+--template-body file://streamback.yml \
+--parameters ParameterKey=FirehoseName,ParameterValue=s1FH ParameterKey=KinesisStreamName,ParameterValue=s1 ParameterKey=ArchiveBucket,ParameterValue=97068-firehose-sink \
+--capabilities CAPABILITY_NAMED_IAM
+```
+
+Notes - was able to confirm that [aggregated records are de-aggregated](https://docs.aws.amazon.com/streams/latest/dev/kpl-with-firehose.html) before being written to s3
+
+## Kinesis Data Analytics
+
+Java apps - will need to deal with aggregated records
+
+Streaming SQL - will need to use a [preprocessing lambda](https://docs.aws.amazon.com/kinesisanalytics/latest/dev/lambda-preprocessing.html) to deaggregate records
