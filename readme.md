@@ -53,6 +53,11 @@ export AWS_PROFILE=xxxx
 export AWS_REGION=xxxx
 ```
 
+### Back Pressure
+
+The [KPL project readme](https://github.com/awslabs/amazon-kinesis-producer) discusses backpressure. This implementation embeds a simple backpressure implementation
+that hasn't been tuned or anything, but is a placeholder to illustrate how this works.
+
 ## Misc AWS Concerns
 
 Create a Stream
