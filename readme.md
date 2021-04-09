@@ -55,8 +55,12 @@ export AWS_REGION=xxxx
 
 ### Back Pressure
 
-The [KPL project readme](https://github.com/awslabs/amazon-kinesis-producer) discusses backpressure. This implementation embeds a simple backpressure implementation
+The [KPL project readme](https://github.com/awslabs/amazon-kinesis-producer) discusses backpressure. 
+This implementation embeds a simple backpressure implementation
 that hasn't been tuned or anything, but is a placeholder to illustrate how this works.
+
+You can experiment with the value of outstandingLimit in StreamWriter.java to see back pressure in action, 
+or just hammer the endpoint with enough load...
 
 ## Misc AWS Concerns
 

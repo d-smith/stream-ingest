@@ -25,7 +25,7 @@ public class StreamWriter {
     private KinesisProducer kinesisProducer;
 
     final ExecutorService callbackThreadPool = Executors.newCachedThreadPool();
-
+    final long outstandingLimit = 300;
 
     public StreamWriter() {
 
@@ -52,11 +52,22 @@ public class StreamWriter {
             };
         };
 
-        logger.info("write to the stream with bytes {}", data);
-        ByteBuffer buffer = ByteBuffer.wrap(data);
+        //logger.info("write to the stream with bytes {}", data);
 
-        // doesn't block
-        ListenableFuture<UserRecordResult> f = kinesisProducer.addUserRecord(streamName, partitionKey, buffer);
-        Futures.addCallback(f, callback, callbackThreadPool);
+        if (kinesisProducer.getOutstandingRecordsCount() < outstandingLimit) {
+
+            ByteBuffer buffer = ByteBuffer.wrap(data);
+
+            // doesn't block
+            ListenableFuture<UserRecordResult> f = kinesisProducer.addUserRecord(streamName, partitionKey, buffer);
+            Futures.addCallback(f, callback, callbackThreadPool);
+        } else {
+            logger.info("apply backpressure");
+            try {
+                Thread.sleep(1);
+            } catch(Throwable t) {
+                logger.error("interrupted exception thrown while attempting to apply backpressure");
+            }
+        }
     }
 }
