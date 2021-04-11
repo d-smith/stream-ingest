@@ -2,6 +2,7 @@ package ds.streamingest;
 
 import java.util.Arrays;
 
+import ds.streamingest.config.MappingConfig;
 import ds.streamingest.controller.MappedIngestController;
 import ds.streamingest.model.PartitionKeyExtractorDescription;
 import ds.streamingest.model.PartitionKeyExtractorTypes;
@@ -36,12 +37,16 @@ public class StreamIngestApplication {
 
 	@Autowired
 	private PartitionKeyExtractorDescRepo repository;
+
+	@Autowired
+	private MappingConfig mappingConfig;
 	
 	@Bean
 	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
 		return args -> {
 
 			//dumpBeans(ctx);
+			logger.info(mappingConfig.toString());
 			if(repository != null) {
 				logger.info("Initializing in memory repository.");
 				repository.store(new PartitionKeyExtractorDescription("s1", PartitionKeyExtractorTypes.HEADER, "s1key"));
