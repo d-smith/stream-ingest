@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import ds.streamingest.config.MappingConfig;
 import ds.streamingest.controller.MappedIngestController;
+import ds.streamingest.model.ApiMapping;
 import ds.streamingest.model.PartitionKeyExtractorDescription;
 import ds.streamingest.model.PartitionKeyExtractorTypes;
 import ds.streamingest.repository.PartitionKeyExtractorDescRepo;
@@ -49,9 +50,15 @@ public class StreamIngestApplication {
 			logger.info(mappingConfig.toString());
 			if(repository != null) {
 				logger.info("Initializing in memory repository.");
-				repository.store(new PartitionKeyExtractorDescription("s1", PartitionKeyExtractorTypes.HEADER, "s1key"));
-				repository.store(new PartitionKeyExtractorDescription("s2", PartitionKeyExtractorTypes.BODY, "/foo/foopart1"));
-
+				for(ApiMapping mapping: mappingConfig.getStreams()) {
+					repository.store(
+							new PartitionKeyExtractorDescription(
+									mapping.getResource(),
+									mapping.getLocation(),
+									mapping.getSpecification()
+							)
+					);
+				}
 			}
 		};
 	}
