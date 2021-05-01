@@ -29,13 +29,13 @@ public class MappedIngestController {
     public ResponseEntity<String> ingest(@PathVariable String streamName,
                                          @RequestHeader Map<String, String> headers,
                                          @RequestBody JsonNode jsonData) throws Exception {
-        logger.info("lookup repo context for stream {}", streamName);
+        //logger.info("lookup repo context for stream {}", streamName);
         PartitionKeyExtractorDescription keyExtractorDesc = repository.retrieve(streamName);
         if(keyExtractorDesc == null) {
             return new ResponseEntity<>(String.format("no mapping found for stream %s",streamName), HttpStatus.BAD_REQUEST);
         }
 
-        logger.info("mapping read for {}",streamName);
+        //logger.info("mapping read for {}",streamName);
 
         switch(keyExtractorDesc.getLocationType()) {
             case HEADER:
@@ -76,14 +76,14 @@ public class MappedIngestController {
                                                            JsonNode jsonData) {
 
         //TODO - can we mask all the values in a json object to avoid logging sensitive data?
-        logger.info("extract value at {} from {}", keyExtractorDesc.getExtractionContext(), jsonData);
+        //logger.info("extract value at {} from {}", keyExtractorDesc.getExtractionContext(), jsonData);
 
         JsonNode keyNode = jsonData.at(keyExtractorDesc.getExtractionContext());
         if(keyNode == null) {
             logger.error("Unable to extract value from body to use as partition key");
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        logger.info("extracted {}", keyNode.asText());
+        //logger.info("extracted {}", keyNode.asText());
 
         streamWriter.writeToStream(streamName, keyNode.asText(), jsonData.toString().getBytes(StandardCharsets.UTF_8));
 
