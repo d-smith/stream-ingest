@@ -31,7 +31,8 @@ public class StreamWriter {
     private KinesisProducer kinesisProducer;
 
     final ExecutorService callbackThreadPool = Executors.newCachedThreadPool();
-    final long outstandingLimit = 5000;
+    final long outstandingLimit = 10000;
+    final long maxBackpressureTries = 5000;
     private long errorCount;
 
     public StreamWriter() {
@@ -48,91 +49,81 @@ public class StreamWriter {
     }
 
     public void writeToStream(String streamName, String partitionKey, byte[] data) {
+        int attempts = 0;
+        while(attempts < maxBackpressureTries) {
 
-
-        final FutureCallback<UserRecordResult> callback = new FutureCallback<UserRecordResult>() {
-            @Override public void onFailure(Throwable t) {
-                //errorCount++;
-                //if(errorCount % 10 == 0) {
-                //    logger.warn("callback error count is {}", errorCount);
+            if (kinesisProducer.getOutstandingRecordsCount() < outstandingLimit) {
+                //if(attempts > 0) {
+                //    logger.info("add user record to producer after {} attempts", attempts);
                 //}
 
-            };
-            @Override public void onSuccess(UserRecordResult result) {
-                //logger.info("callback indicates success - {}", result);
-            };
-        };
+                ByteBuffer buffer = ByteBuffer.wrap(data);
 
-        //logger.info("write to the stream with bytes {}", data);
+                // doesn't block
+                ListenableFuture<UserRecordResult> f = kinesisProducer.addUserRecord(streamName, partitionKey, buffer);
+                Futures.addCallback(f, new FutureCallback<UserRecordResult>() {
+                    @Override
+                    public void onSuccess(UserRecordResult result) {
+                        long totalTime = result.getAttempts().stream()
+                                .mapToLong(a -> a.getDelay() + a.getDuration())
+                                .sum();
+                        // Only log with a small probability, otherwise it'll be very
+                        // spammy
+                        if (RANDOM.nextDouble() < 1e-5) {
+                            logger.info(String.format(
+                                    "Succesfully put record, partitionKey=%s, "
+                                            + "payload=%s, sequenceNumber=%s, "
+                                            + "shardId=%s, took %d attempts, "
+                                            + "totalling %s ms",
+                                    partitionKey, data, result.getSequenceNumber(),
+                                    result.getShardId(), result.getAttempts().size(),
+                                    totalTime));
+                        }
+                    }
 
-/*
-        if (kinesisProducer.getOutstandingRecordsCount() < outstandingLimit) {
+                    @Override
+                    public void onFailure(Throwable t) {
+                        if (t instanceof UserRecordFailedException) {
+                            UserRecordFailedException e =
+                                    (UserRecordFailedException) t;
+                            UserRecordResult result = e.getResult();
 
-            ByteBuffer buffer = ByteBuffer.wrap(data);
+                            String errorList =
+                                    StringUtils.join(result.getAttempts().stream()
+                                            .map(a -> String.format(
+                                                    "Delay after prev attempt: %d ms, "
+                                                            + "Duration: %d ms, Code: %s, "
+                                                            + "Message: %s",
+                                                    a.getDelay(), a.getDuration(),
+                                                    a.getErrorCode(),
+                                                    a.getErrorMessage()))
+                                            .collect(Collectors.toList()), "\n");
 
-            // doesn't block
-            ListenableFuture<UserRecordResult> f = kinesisProducer.addUserRecord(streamName, partitionKey, buffer);
-            Futures.addCallback(f, callback, callbackThreadPool);
-        } else {
-            logger.info("apply backpressure");
-            try {
-                Thread.sleep(1);
-            } catch(Throwable t) {
-                logger.error("interrupted exception thrown while attempting to apply backpressure");
+                            logger.error(String.format(
+                                    "Record failed to put, partitionKey=%s, "
+                                            + "payload=%s, attempts:\n%s",
+                                    partitionKey, data, errorList));
+                        }
+                    }
+
+                    ;
+                }, callbackThreadPool);
+
+                break;
+            } else {
+
+                attempts++;
+                try {
+                    Thread.sleep(1);
+                } catch (Throwable t) {
+                    logger.error("interrupted exception thrown while attempting to apply backpressure");
+                }
             }
         }
-*/
 
-        ByteBuffer buffer = ByteBuffer.wrap(data);
-
-        // doesn't block
-        ListenableFuture<UserRecordResult> f = kinesisProducer.addUserRecord(streamName, partitionKey, buffer);
-        Futures.addCallback(f, new FutureCallback<UserRecordResult>() {
-            @Override
-            public void onSuccess(UserRecordResult result) {
-                long totalTime = result.getAttempts().stream()
-                        .mapToLong(a -> a.getDelay() + a.getDuration())
-                        .sum();
-                // Only log with a small probability, otherwise it'll be very
-                // spammy
-                if (RANDOM.nextDouble() < 1e-5) {
-                    logger.info(String.format(
-                            "Succesfully put record, partitionKey=%s, "
-                                    + "payload=%s, sequenceNumber=%s, "
-                                    + "shardId=%s, took %d attempts, "
-                                    + "totalling %s ms",
-                            partitionKey, data, result.getSequenceNumber(),
-                            result.getShardId(), result.getAttempts().size(),
-                            totalTime));
-                }
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                if (t instanceof UserRecordFailedException) {
-                    UserRecordFailedException e =
-                            (UserRecordFailedException) t;
-                    UserRecordResult result = e.getResult();
-
-                    String errorList =
-                            StringUtils.join(result.getAttempts().stream()
-                                    .map(a -> String.format(
-                                            "Delay after prev attempt: %d ms, "
-                                                    + "Duration: %d ms, Code: %s, "
-                                                    + "Message: %s",
-                                            a.getDelay(), a.getDuration(),
-                                            a.getErrorCode(),
-                                            a.getErrorMessage()))
-                                    .collect(Collectors.toList()), "\n");
-
-                    logger.error(String.format(
-                            "Record failed to put, partitionKey=%s, "
-                                    + "payload=%s, attempts:\n%s",
-                            partitionKey, data, errorList));
-                }
-            };
-        }, callbackThreadPool);
-
+        if(attempts == maxBackpressureTries ) {
+            logger.error("Gave up after {} attempts", maxBackpressureTries);
+        }
 
     }
 }

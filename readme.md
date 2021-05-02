@@ -10,6 +10,8 @@ and a mapping API that uses the resource context, and some metadata to determine
 which stream to write to, and how to extract the partition key value from the 
 API call.
 
+This uses KPL under the hood. Properties for KPL config documented [here](https://github.com/awslabs/amazon-kinesis-producer/blob/master/java/amazon-kinesis-producer-sample/default_config.properties)
+
 To build and run:
 
 ```
