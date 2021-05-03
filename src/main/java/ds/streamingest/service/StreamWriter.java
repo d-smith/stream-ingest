@@ -10,13 +10,16 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import ds.streamingest.controller.KinesisDeliveryCounter;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.nio.ByteBuffer;
 import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -35,20 +38,32 @@ public class StreamWriter {
     final long maxBackpressureTries = 5000;
     private long errorCount;
 
+    @Autowired
+    private KinesisDeliveryCounter counter;
+
     public StreamWriter() {
 
         //TODO - load config from properties
         logger.info("initializing KPL");
         KinesisProducerConfiguration config = new KinesisProducerConfiguration()
-                .setRecordMaxBufferedTime(3000)
+                .setRecordMaxBufferedTime(300)
                 .setMaxConnections(10)
                 .setRegion(System.getenv("AWS_REGION"))
+                .setRateLimit(100)
                 .setRequestTimeout(60000);
 
         kinesisProducer = new KinesisProducer(config);
     }
 
     public void writeToStream(String streamName, String partitionKey, byte[] data) {
+
+        //Use the following for overloading the partition key if you are testing with static.
+        //Make sure to update the addUserRecord call below to use the overridden value
+        //JMeter payloads against multiple shards
+        //String overridePartitionKey = UUID.randomUUID().toString();
+
+
+        counter.incrementAttempts();
         int attempts = 0;
         while(attempts < maxBackpressureTries) {
 
@@ -64,6 +79,7 @@ public class StreamWriter {
                 Futures.addCallback(f, new FutureCallback<UserRecordResult>() {
                     @Override
                     public void onSuccess(UserRecordResult result) {
+                        counter.incrementSuccesses();
                         long totalTime = result.getAttempts().stream()
                                 .mapToLong(a -> a.getDelay() + a.getDuration())
                                 .sum();
@@ -83,6 +99,7 @@ public class StreamWriter {
 
                     @Override
                     public void onFailure(Throwable t) {
+                        counter.incrementFailures();
                         if (t instanceof UserRecordFailedException) {
                             UserRecordFailedException e =
                                     (UserRecordFailedException) t;
