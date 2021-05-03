@@ -2,38 +2,45 @@
 
 ## Exp 1 - No back pressure
 
-Lots of warnings...
+High sustained load - 50 threads, 10000 records sent per, no wait time
 
+Lots of warnings...
+```
 16:16:25.209 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-04-30 16:16:25.177912] [0x00004aa3][0x000070000c351000] [info] [processing_statistics_logger.cc:114] Stage 2 Triggers: { stream: 's2', manual: 0, count: 0, size: 0, matches: 0, timed: 225, KinesisRecords: 469, PutRecords: 225 }
 16:16:25.209 [kpl-daemon-0003] WARN  c.a.services.kinesis.producer.LogInputStreamReader - [2021-04-30 16:16:25.177942] [0x00004aa3][0x000070000c351000] [warning] [processing_statistics_logger.cc:126] PutRecords processing time is taking longer than 15000 ms to complete.  You may need to adjust your configuration to reduce the processing time.
-
+```
 Then tons of errors
 
+```
 16:16:55.297 [pool-1-thread-7] WARN  ds.streamingest.service.StreamWriter - callback error count is 49160
+```
 
 With extended logging:
 
+```
 18:59:23.297 [pool-1-thread-29] ERROR ds.streamingest.service.StreamWriter - Record failed to put, partitionKey=1, payload=[B@21123ae, attempts:
 Delay after prev attempt: 29986 ms, Duration: 0 ms, Code: Expired, Message: Expiration reached while waiting in limiter
 Delay after prev attempt: 23 ms, Duration: 0 ms, Code: Expired, Message: Expiration reached while waiting in limiter
 Delay after prev attempt: 0 ms, Duration: 0 ms, Code: Expired, Message: Record has reached expiration
+```
 
 
-com.amazonaws.services.kinesis.producer.UserRecordFailedException
-
-See rt-no-bp-ramp-up.png.
+![](./rt-no-bp-ramp-up.png)
 
 The trend is steady response time, then a latency spike while messages are being discarded, a temporary resumption of 
 Kinesis writes, then the thrashing below.
 
 Then...
 
+```
 java.lang.RuntimeException: Future for message id 307470 not found as potentially it was a duplicate message or was timed out in Java layer.
-
+```
 
 At some point the KPL process starts crapping out...
 
+```
 Exception in thread "kpl-callback-pool-1-thread-3164" java.lang.OutOfMemoryError: unable to create native thread: possibly out of memory or process/resource limits reached
+```
 
 At this time HTTP errors returned to client 
 
@@ -115,7 +122,7 @@ com.amazonaws.services.kinesis.producer.DaemonException: The child process has b
 
 50 threads, 750s ramp up period (add thread every 15 seconds), 25000 loop count
 
-No back pressure - rt-no-bp-ramp-up.png
+![](./rt-no-bp-ramp-up.png)
 
 HTTP Request	1250000	3	0	2936	25.38501650212771	1.232E-4	1419.4061204791915	231.1022320604809	2518.6141805768466	166.723732
 TOTAL	1250000	3	0	2936	25.38501650212771	1.232E-4	1419.4061204791915	231.1022320604809	2518.6141805768466	166.723732
@@ -129,13 +136,15 @@ TOTAL	443887	57	0	3121	221.35761692052992	0.0	297.821791478384	48.48637055019642
 
 Response time grows a more load introduced - peak throughput looks 'throttled' at 300 TPS.
 
-See rt-bp-500
+![](./rt-bp-500)
 
 Typical stats
 
+```
 09:14:58.837 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-01 09:14:58.836902] [0x00009eee][0x000070000585a000] [info] [processing_statistics_logger.cc:111] Stage 1 Triggers: { stream: 's2', manual: 0, count: 0, size: 156, matches: 0, timed: 0, UserRecords: 4836, KinesisRecords: 156 }
 09:14:58.837 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-01 09:14:58.836971] [0x00009eee][0x000070000585a000] [info] [processing_statistics_logger.cc:114] Stage 2 Triggers: { stream: 's2', manual: 0, count: 0, size: 0, matches: 26, timed: 0, KinesisRecords: 156, PutRecords: 26 }
 09:14:58.837 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-01 09:14:58.837004] [0x00009eee][0x000070000585a000] [info] [processing_statistics_logger.cc:129] (s2) Average Processing Time: 1159.4615 ms
+```
 
 Wide range of attempts to buffer - anywhere from 1 to 750 attempts, a few outliers above 750
 
@@ -148,12 +157,13 @@ Saw the occasional 'PutRecords processing time is taking longer than 15000 ms to
 HTTP Request	491170	48	0	37300	342.9153769842055	0.0	330.45735346160416	53.79952650594516	586.3681750388035	166.71051367143758
 TOTAL	491170	48	0	37300	342.9153769842055	0.0	330.45735346160416	53.79952650594516	586.3681750388035	166.71051367143758
 
-See rt-bp-5000
+![](./rt-bp-5000)
 
+```
 09:46:32.926 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-01 09:46:32.926186] [0x0000a0fa][0x0000700002342000] [info] [processing_statistics_logger.cc:111] Stage 1 Triggers: { stream: 's2', manual: 0, count: 0, size: 156, matches: 0, timed: 0, UserRecords: 4836, KinesisRecords: 156 }
 09:46:32.926 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-01 09:46:32.926328] [0x0000a0fa][0x0000700002342000] [info] [processing_statistics_logger.cc:114] Stage 2 Triggers: { stream: 's2', manual: 0, count: 0, size: 0, matches: 26, timed: 0, KinesisRecords: 156, PutRecords: 26 }
 09:46:32.926 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-01 09:46:32.926385] [0x0000a0fa][0x0000700002342000] [info] [processing_statistics_logger.cc:129] (s2) Average Processing Time: 13977.731 ms
-0
+```
 
 Throttle delays up to 1500
 
@@ -166,29 +176,30 @@ Removed attempts logging
 HTTP Request	513256	46	0	3086	208.61769724251153	0.0	336.34582958983	54.75819817504621	596.8167698874229	166.71054015929673
 TOTAL	513256	46	0	3086	208.61769724251153	0.0	336.34582958983	54.75819817504621	596.8167698874229	166.71054015929673
 
+```
 10:17:58.146 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-01 10:17:58.145830] [0x0000a312][0x000070000f9ec000] [info] [processing_statistics_logger.cc:129] (s2) Average Processing Time: 29010 ms
 10:18:13.151 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-01 10:18:13.150918] [0x0000a312][0x000070000f9ec000] [info] [processing_statistics_logger.cc:111] Stage 1 Triggers: { stream: 's2', manual: 0, count: 0, size: 0, matches: 0, timed: 0, UserRecords: 0, KinesisRecords: 0 }
 10:18:13.151 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-01 10:18:13.151030] [0x0000a312][0x000070000f9ec000] [info] [processing_statistics_logger.cc:114] Stage 2 Triggers: { stream: 's2', manual: 0, count: 0, size: 0, matches: 0, timed: 0, KinesisRecords: 0, PutRecords: 0 }
 10:18:13.151 [kpl-daemon-0003] WARN  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-01 10:18:13.151265] [0x0000a312][0x000070000f9ec000] [warning] [processing_statistics_logger.cc:126] PutRecords processing time is taking longer than 15000 ms to complete.  You may need to adjust your configuration to reduce the processing time.
+```
 
-
-See rt-bp-10000-25t
+![](./rt-bp-10000-25t)
 
 But... what happens at 50 threads, 750s ramp up period (add thread every 15 seconds), 25000 loop count?
 
 
-
+```
 09:54:57.728 [kpl-daemon-0003] WARN  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-01 09:54:57.727637] [0x0000a312][0x000070000f9ec000] [warning] [processing_statistics_logger.cc:126] PutRecords processing time is taking longer than 15000 ms to complete.  You may need to adjust your configuration to reduce the processing time.
 09:54:57.728 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-01 09:54:57.727662] [0x0000a312][0x000070000f9ec000] [info] [processing_statistics_logger.cc:129] (s2) Average Processing Time: 30719.615 ms
 09:55:12.735 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-01 09:55:12.734660] [0x0000a312][0x000070000f9ec000] [info] [processing_statistics_logger.cc:111] Stage 1 Triggers: { stream: 's2', manual: 0, count: 0, size: 168, matches: 0, timed: 0, UserRecords: 5208, KinesisRecords: 168 }
 09:55:12.735 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-01 09:55:12.734926] [0x0000a312][0x000070000f9ec000] [info] [processing_statistics_logger.cc:114] Stage 2 Triggers: { stream: 's2', manual: 0, count: 0, size: 0, matches: 28, timed: 0, KinesisRecords: 168, PutRecords: 28 }
 09:55:12.735 [kpl-daemon-0003] WARN  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-01 09:55:12.734969] [0x0000a312][0x000070000f9ec000] [warning] [processing_statistics_logger.cc:126] PutRecords processing time is taking longer than 15000 ms to complete.  You may need to adjust your configuration to reduce the processing time.
-
+```
 
 HTTP Request	1250000	123	0	5309	374.0296445928373	0.0	323.92524841827304	52.73591617559599	574.7775159921895	166.71
 TOTAL	1250000	123	0	5309	374.0296445928373	0.0	323.92524841827304	52.73591617559599	574.7775159921895	166.71
 
-See rt-bp-10000-50t
+![](./rt-bp-10000-50t)
 
 
 
@@ -203,7 +214,7 @@ the end and no forward progress being made.
 
 The spring endpoint also became non-responsive, so stats could not be harvested.
 
-Attempts to kil via control-C did not work
+Attempts to kill via control-C did not work
 
 Reattempt at 25 threads, 750s ramp up period (add thread every 15 seconds), 25000 loop count
 
@@ -213,10 +224,12 @@ runs steady under the break point - stopped the client at 395362
 
 Many errors logged...
 
+```
 Delay after prev attempt: 9 ms, Duration: 0 ms, Code: Expired, Message: Record has reached expiration
 09:48:22.193 [pool-1-thread-226] ERROR ds.streamingest.service.StreamWriter - Record failed to put, partitionKey=1, payload=[B@16b5f750, attempts:
 Delay after prev attempt: 464 ms, Duration: 321350 ms, Code: InvalidSignatureException, Message: Signature expired: 20210502T164300Z is now earlier than 20210502T164322Z (20210502T164822Z - 5 min.) with address : 3.91.171.241
 Delay after prev attempt: 9 ms, Duration: 0 ms, Code: Expired, Message: Record has reached expiration
+```
 
 The errors in the daemon did not result in the failure callback being invoked.
 
@@ -224,9 +237,11 @@ Looks like records get buffered waiting to deal with throttling.
 
 Eventually the errors cleared, then normal no activity logging appeared, e.g.
 
+```
 10:01:26.001 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-02 10:01:26.001461] [0x0000f296][0x0000700007283000] [info] [processing_statistics_logger.cc:111] Stage 1 Triggers: { stream: 's2', manual: 0, count: 0, size: 0, matches: 0, timed: 0, UserRecords: 0, KinesisRecords: 0 }
 10:01:26.001 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-02 10:01:26.001556] [0x0000f296][0x0000700007283000] [info] [processing_statistics_logger.cc:114] Stage 2 Triggers: { stream: 's2', manual: 0, count: 0, size: 0, matches: 0, timed: 0, KinesisRecords: 0, PutRecords: 0 }
 10:01:26.001 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-02 10:01:26.001597] [0x0000f296][0x0000700007283000] [info] [processing_statistics_logger.cc:129] (s2) Average Processing Time: nan ms
+```
 
 Normal delivery resumed...
 
@@ -284,8 +299,9 @@ etc...
 
 Eventually settled out at...
 
+```
 {"failures":372090,"successes":232688,"attempts":604868}
-
+```
 
 ## No BP, Set record TTL of 10 seconds
 
@@ -301,9 +317,9 @@ KinesisProducerConfiguration config = new KinesisProducerConfiguration()
 
 Watching throughput in real time, decreases when discarding is happening (could be because of the excessive logging)
 
-As the traffic ramps up you see a pattern reminisent of gc pauses...
+As the traffic ramps up you see a pattern reminiscent of gc pauses...
 
-See bp-tt
+![](./bp-tt)
 
 Stop at HTTP Request	458560	40	0	641	79.05436773045788	0.0	568.2075860966582	92.50657688184067	1008.2355311890899	166.7114924982554
 TOTAL	458560	40	0	641	79.05436773045788	0.0	568.2075860966582	92.50657688184067	1008.2355311890899	166.7114924982554
@@ -350,9 +366,7 @@ TOTAL	178172	3	0	562	11.79274795452173	1.9643939564016792E-4	1069.4148505164849	
 
 label, samples, average, min, max, std dev, % error, throughput, recv kb/s, sent kb/sec, avg. bytes
 
-Attempts and sucessess differ by roughly the backpressure limit
-
-
+Attempts and successes differ by roughly the backpressure limit
 
 
 
@@ -383,7 +397,7 @@ Status leveled out...
 
 Latency adjusts to allow safely ingesting new records...
 
-See bp-10000
+![](./bp-10000)
 
 ### BP at 10000 with 4 shards
 
@@ -401,7 +415,7 @@ Stats:
 HTTP Request	1250000	128	0	8350	552.140409520793	0.0	316.24681318086357	51.48588891302555	561.1527925289347	166.7101392
 TOTAL	1250000	128	0	8350	552.140409520793	0.0	316.24681318086357	51.48588891302555	561.1527925289347	166.7101392
 
-See bp-10000-4shards
+![](./bp-10000-4shards)
 
 Need another count to capture - how many writes were abandoned after repeated attempts that were back pressured
 
@@ -427,7 +441,7 @@ KinesisProducerConfiguration config = new KinesisProducerConfiguration()
 HTTP Request	1250000	121	0	4444	294.22504439817834	0.0	327.59363084600665	53.33313886556422	581.286745358588	166.71
 TOTAL	1250000	121	0	4444	294.22504439817834	0.0	327.59363084600665	53.33313886556422	581.286745358588	166.71
 
-bp-10000-4shards-300buf
+![](./bp-10000-4shards-300buf)
 
 
 ### BP at 10000, 4 shards, 300ms buffer time, RateLimit=100
@@ -446,19 +460,22 @@ KinesisProducerConfiguration config = new KinesisProducerConfiguration()
 
 ```
 
+```
 18:31:43.532 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-02 18:31:43.532204] [0x000113ae][0x0000700007267000] [info] [processing_statistics_logger.cc:129] (s2) Average Processing Time: 25808.273 ms
 18:31:58.534 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-02 18:31:58.534590] [0x000113ae][0x0000700007267000] [info] [processing_statistics_logger.cc:111] Stage 1 Triggers: { stream: 's2', manual: 0, count: 0, size: 119, matches: 0, timed: 64, UserRecords: 4682, KinesisRecords: 183 }
 18:31:58.534 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-02 18:31:58.534658] [0x000113ae][0x0000700007267000] [info] [processing_statistics_logger.cc:114] Stage 2 Triggers: { stream: 's2', manual: 0, count: 0, size: 0, matches: 1, timed: 35, KinesisRecords: 183, PutRecords: 36 }
+```
 
-
+```
 19:09:44.485 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-02 19:09:44.485036] [0x000113ae][0x0000700007267000] [info] [processing_statistics_logger.cc:129] (s2) Average Processing Time: 31203.176 ms
 19:09:59.493 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-02 19:09:59.493293] [0x000113ae][0x0000700007267000] [info] [processing_statistics_logger.cc:111] Stage 1 Triggers: { stream: 's2', manual: 0, count: 0, size: 71, matches: 0, timed: 35, UserRecords: 2623, KinesisRecords: 106 }
 19:09:59.493 [kpl-daemon-0003] INFO  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-02 19:09:59.493393] [0x000113ae][0x0000700007267000] [info] [processing_statistics_logger.cc:114] Stage 2 Triggers: { stream: 's2', manual: 0, count: 0, size: 0, matches: 0, timed: 18, KinesisRecords: 105, PutRecords: 18 }
 19:09:59.493 [kpl-daemon-0003] WARN  c.a.services.kinesis.producer.LogInputStreamReader - [2021-05-02 19:09:59.493433] [0x000113ae][0x0000700007267000] [warning] [processing_statistics_logger.cc:126] PutRecords processing time is taking longer than 1500 ms to complete.  You may need to adjust your configuration to reduce the processing time.
+```
 
 HTTP Request	1250000	124	0	5807	309.93034059394444	0.0	322.4823608598257	52.5010101356851	572.2172360178743	166.71
 TOTAL	1250000	124	0	5807	309.93034059394444	0.0	322.4823608598257	52.5010101356851	572.2172360178743	166.71
 
 {"failures":0,"successes":1250000,"attempts":1250000}
 
-bp-10000-4shards-300buf-100rl
+![](./bp-10000-4shards-300buf-100rl)
