@@ -34,7 +34,7 @@ public class StreamWriter {
     private KinesisProducer kinesisProducer;
 
     final ExecutorService callbackThreadPool = Executors.newCachedThreadPool();
-    final long outstandingLimit = 10000;
+    final long outstandingLimit = KPLConfiguration.getBackPressureBufferThreshold();
     final long maxBackpressureTries = 5000;
     private long errorCount;
 
@@ -46,10 +46,12 @@ public class StreamWriter {
         //TODO - load config from properties
         logger.info("initializing KPL");
         KinesisProducerConfiguration config = new KinesisProducerConfiguration()
-                .setRecordMaxBufferedTime(300)
+                .setFailIfThrottled(KPLConfiguration.getFailIfThrottled())
+                .setRecordMaxBufferedTime(KPLConfiguration.getRecordMaxBufferedTime())
                 .setMaxConnections(10)
                 .setRegion(System.getenv("AWS_REGION"))
-                .setRateLimit(100)
+                .setRateLimit(KPLConfiguration.getRateLimit())
+                .setRecordTtl(KPLConfiguration.getRecordTtl())
                 .setRequestTimeout(60000);
 
         kinesisProducer = new KinesisProducer(config);
