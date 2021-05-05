@@ -142,6 +142,7 @@ public class StreamWriter {
 
         if(attempts == maxBackpressureTries ) {
             logger.error("Gave up after {} attempts", maxBackpressureTries);
+            counter.incrementExhausted();
         }
 
     }

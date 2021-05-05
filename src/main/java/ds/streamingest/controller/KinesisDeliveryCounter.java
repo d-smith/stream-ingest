@@ -17,6 +17,7 @@ public class KinesisDeliveryCounter {
     private AtomicLong attempts = new AtomicLong(0);
     private AtomicLong successes = new AtomicLong(0);
     private AtomicLong failures = new AtomicLong(0);
+    private AtomicLong exhausted = new AtomicLong(0);
 
     @ReadOperation
     public Map<String,Long> counts() {
@@ -25,6 +26,7 @@ public class KinesisDeliveryCounter {
         counts.put("attempts", attempts.getPlain());
         counts.put("successes", successes.getPlain());
         counts.put("failures", failures.getPlain());
+        counts.put("exhausted", failures.getPlain());
 
         return counts;
     }
@@ -39,5 +41,9 @@ public class KinesisDeliveryCounter {
 
     public void incrementSuccesses() {
         successes.incrementAndGet();
+    }
+
+    public void incrementExhausted() {
+        exhausted.incrementAndGet();
     }
 }
