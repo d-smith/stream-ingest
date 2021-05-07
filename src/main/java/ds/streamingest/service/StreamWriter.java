@@ -1,9 +1,6 @@
 package ds.streamingest.service;
 
-import com.amazonaws.services.kinesis.producer.KinesisProducer;
-import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration;
-import com.amazonaws.services.kinesis.producer.UserRecordFailedException;
-import com.amazonaws.services.kinesis.producer.UserRecordResult;
+import com.amazonaws.services.kinesis.producer.*;
 
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -18,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -63,6 +61,9 @@ public class StreamWriter {
         //Make sure to update the addUserRecord call below to use the overridden value
         //JMeter payloads against multiple shards
         //String overridePartitionKey = UUID.randomUUID().toString();
+
+
+
 
 
         counter.incrementAttempts();
@@ -145,5 +146,14 @@ public class StreamWriter {
             counter.incrementExhausted();
         }
 
+        logger.info("available metrics");
+        try {
+            List<Metric> metrics = kinesisProducer.getMetrics();
+            for (Metric m : metrics) {
+                logger.info("  {}", m.toString());
+            }
+
+        } catch (Throwable t) {
+        }
     }
 }

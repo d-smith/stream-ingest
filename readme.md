@@ -134,3 +134,48 @@ Notes - was able to confirm that [aggregated records are de-aggregated](https://
 Java apps - will need to deal with aggregated records
 
 Streaming SQL - will need to use a [preprocessing lambda](https://docs.aws.amazon.com/kinesisanalytics/latest/dev/lambda-preprocessing.html) to deaggregate records
+
+## Notes on Metrics
+
+KPL keeps track of metrics in the producer instance...
+
+Example log dump:
+
+```
+08:14:16.249 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter - available metrics
+08:14:16.263 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=RetriesPerRecord, duration=19, dimensions={StreamName=s2, ShardId=shardId-000000000000}, sum=0.0, mean=0.0, sampleCount=3.0, min=0.0, max=0.0]
+08:14:16.263 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=RetriesPerRecord, duration=19, dimensions={StreamName=s2}, sum=0.0, mean=0.0, sampleCount=3.0, min=0.0, max=0.0]
+08:14:16.263 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=RetriesPerRecord, duration=19, dimensions={}, sum=0.0, mean=0.0, sampleCount=3.0, min=0.0, max=0.0]
+08:14:16.263 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=AllErrors, duration=15, dimensions={StreamName=s2, ShardId=shardId-000000000000}, sum=0.0, mean=0.0, sampleCount=2.0, min=0.0, max=0.0]
+08:14:16.264 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=BufferingTime, duration=19, dimensions={StreamName=s2, ShardId=shardId-000000000000}, sum=358.0, mean=119.33333333333333, sampleCount=3.0, min=113.0, max=123.0]
+08:14:16.264 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=BufferingTime, duration=19, dimensions={}, sum=358.0, mean=119.33333333333333, sampleCount=3.0, min=113.0, max=123.0]
+08:14:16.265 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=UserRecordsPerKinesisRecord, duration=15, dimensions={StreamName=s2, ShardId=shardId-000000000000}, sum=2.0, mean=1.0, sampleCount=2.0, min=1.0, max=1.0]
+08:14:16.266 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=BufferingTime, duration=19, dimensions={StreamName=s2}, sum=358.0, mean=119.33333333333333, sampleCount=3.0, min=113.0, max=123.0]
+08:14:16.266 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=UserRecordsDataPut, duration=19, dimensions={StreamName=s2, ShardId=shardId-000000000000}, sum=195.0, mean=65.0, sampleCount=3.0, min=65.0, max=65.0]
+08:14:16.266 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=UserRecordsDataPut, duration=19, dimensions={}, sum=195.0, mean=65.0, sampleCount=3.0, min=65.0, max=65.0]
+08:14:16.266 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=UserRecordsDataPut, duration=19, dimensions={StreamName=s2}, sum=195.0, mean=65.0, sampleCount=3.0, min=65.0, max=65.0]
+08:14:16.267 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=UserRecordsPut, duration=19, dimensions={StreamName=s2, ShardId=shardId-000000000000}, sum=3.0, mean=1.0, sampleCount=3.0, min=1.0, max=1.0]
+08:14:16.267 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=UserRecordsPerPutRecordsRequest, duration=19, dimensions={}, sum=3.0, mean=1.0, sampleCount=3.0, min=1.0, max=1.0]
+08:14:16.268 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=AllErrors, duration=19, dimensions={StreamName=s2}, sum=0.0, mean=0.0, sampleCount=3.0, min=0.0, max=0.0]
+08:14:16.268 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=UserRecordsPut, duration=19, dimensions={StreamName=s2}, sum=3.0, mean=1.0, sampleCount=3.0, min=1.0, max=1.0]
+08:14:16.269 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=KinesisRecordsDataPut, duration=19, dimensions={StreamName=s2}, sum=195.0, mean=65.0, sampleCount=3.0, min=65.0, max=65.0]
+08:14:16.269 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=KinesisRecordsDataPut, duration=19, dimensions={}, sum=195.0, mean=65.0, sampleCount=3.0, min=65.0, max=65.0]
+08:14:16.270 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=UserRecordsReceived, duration=19, dimensions={}, sum=4.0, mean=1.0, sampleCount=4.0, min=1.0, max=1.0]
+08:14:16.270 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=RequestTime, duration=19, dimensions={StreamName=s2}, sum=969.0, mean=323.0, sampleCount=3.0, min=200.0, max=563.0]
+08:14:16.270 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=UserRecordsPut, duration=19, dimensions={}, sum=3.0, mean=1.0, sampleCount=3.0, min=1.0, max=1.0]
+08:14:16.271 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=KinesisRecordsPut, duration=19, dimensions={StreamName=s2}, sum=3.0, mean=1.0, sampleCount=3.0, min=1.0, max=1.0]
+08:14:16.271 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=KinesisRecordsDataPut, duration=15, dimensions={StreamName=s2, ShardId=shardId-000000000000}, sum=130.0, mean=65.0, sampleCount=2.0, min=65.0, max=65.0]
+08:14:16.271 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=KinesisRecordsPut, duration=19, dimensions={}, sum=3.0, mean=1.0, sampleCount=3.0, min=1.0, max=1.0]
+08:14:16.271 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=UserRecordsPerPutRecordsRequest, duration=19, dimensions={StreamName=s2}, sum=3.0, mean=1.0, sampleCount=3.0, min=1.0, max=1.0]
+08:14:16.272 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=RequestTime, duration=19, dimensions={}, sum=969.0, mean=323.0, sampleCount=3.0, min=200.0, max=563.0]
+08:14:16.273 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=KinesisRecordsPerPutRecordsRequest, duration=19, dimensions={}, sum=3.0, mean=1.0, sampleCount=3.0, min=1.0, max=1.0]
+08:14:16.273 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=AllErrors, duration=19, dimensions={}, sum=0.0, mean=0.0, sampleCount=3.0, min=0.0, max=0.0]
+08:14:16.273 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=KinesisRecordsPut, duration=15, dimensions={StreamName=s2, ShardId=shardId-000000000000}, sum=2.0, mean=1.0, sampleCount=2.0, min=1.0, max=1.0]
+08:14:16.273 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=UserRecordsPerKinesisRecord, duration=19, dimensions={StreamName=s2}, sum=3.0, mean=1.0, sampleCount=3.0, min=1.0, max=1.0]
+08:14:16.273 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=UserRecordsPending, duration=19, dimensions={StreamName=s2}, sum=7.0, mean=0.07142857142857142, sampleCount=98.0, min=0.0, max=1.0]
+08:14:16.274 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=UserRecordsPending, duration=19, dimensions={}, sum=7.0, mean=0.07142857142857142, sampleCount=98.0, min=0.0, max=1.0]
+08:14:16.274 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=UserRecordsReceived, duration=19, dimensions={StreamName=s2}, sum=4.0, mean=1.0, sampleCount=4.0, min=1.0, max=1.0]
+08:14:16.274 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=UserRecordsPerKinesisRecord, duration=19, dimensions={}, sum=3.0, mean=1.0, sampleCount=3.0, min=1.0, max=1.0]
+08:14:16.274 [http-nio-8080-exec-4] INFO  ds.streamingest.service.StreamWriter -   Metric [name=KinesisRecordsPerPutRecordsRequest, duration=19, dimensions={StreamName=s2}, sum=3.0, mean=1.0, sampleCount=3.0, min=1.0, max=1.0]
+```
+
