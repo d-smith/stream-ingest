@@ -137,9 +137,10 @@ Streaming SQL - will need to use a [preprocessing lambda](https://docs.aws.amazo
 
 ## Notes on Metrics
 
-KPL keeps track of metrics in the producer instance...
+KPI programming interface allows access to metrics it collects, in addition to sending them to cloud watch. For
+details see [here](https://github.com/awslabs/amazon-kinesis-producer/blob/master/metrics.md).
 
-Example log dump:
+Example `getMetrics` dump:
 
 ```
 07:43:13.489 [http-nio-8080-exec-8] INFO  ds.streamingest.service.StreamWriter - available metrics
