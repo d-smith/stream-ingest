@@ -75,6 +75,9 @@ public class StreamWriter {
                 //    logger.info("add user record to producer after {} attempts", attempts);
                 //}
 
+                //You can watch this and see the crash coming....
+                //logger.info("-------> OLDEST: {}",kinesisProducer.getOldestRecordTimeInMillis());
+
                 ByteBuffer buffer = ByteBuffer.wrap(data);
 
                 // doesn't block
@@ -144,16 +147,6 @@ public class StreamWriter {
         if(attempts == maxBackpressureTries ) {
             logger.error("Gave up after {} attempts", maxBackpressureTries);
             counter.incrementExhausted();
-        }
-
-        logger.info("available metrics");
-        try {
-            List<Metric> metrics = kinesisProducer.getMetrics();
-            for (Metric m : metrics) {
-                logger.info("  {}", m.toString());
-            }
-
-        } catch (Throwable t) {
         }
     }
 }
