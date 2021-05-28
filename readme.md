@@ -41,7 +41,7 @@ curl localhost:8080/writeToStream -X POST -d '{"streamName":"s1", "key":"k","dat
 Ingest style 2 - mapped ingest, partition key via http header
 
 ```
-curl localhost:8080/mappedIngest/s1 -X POST -d '{"k1":{"o1":"xxx"}, "k2":"v2"}' -H 'Content-Type: application/json' -H 'S1KEY: v2'
+curl localhost:8080/mappedIngest/s1 -X POST -d @ce.json -H 'Content-Type: application/json' -H 'S1KEY: v2'
 ```
 
 Ingest style 2 - mapped ingest, partition key json path
