@@ -116,7 +116,7 @@ aws cloudwatch get-metric-statistics --namespace "AWS/Kinesis" \
 
 ```
 
-## Fire Hose
+## Firehose
 
 Use [this project](https://github.com/d-smith/kinesis-firehose-s3) to set up a firehose.
 
@@ -128,6 +128,8 @@ aws cloudformation create-stack --stack-name archiveFirehose \
 ```
 
 Notes - was able to confirm that [aggregated records are de-aggregated](https://docs.aws.amazon.com/streams/latest/dev/kpl-with-firehose.html) before being written to s3
+
+To process events when they hit the bucket, add the xform lambda in the above project, then install the ce2ddb project
 
 ## Kinesis Data Analytics
 
