@@ -80,6 +80,8 @@ aws kinesis delete-stream --stream-name s1
 aws kinesis delete-stream --stream-name s2
 ```
 
+Lambda Deploy - look at the readme in xform/
+
 Minimal KPL Producer IAM Policy
 
 ```console
