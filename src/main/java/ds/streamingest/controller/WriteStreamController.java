@@ -1,6 +1,7 @@
 package ds.streamingest.controller;
 
 import ds.streamingest.model.WriteStreamRequest;
+import ds.streamingest.service.LambdaCaller;
 import ds.streamingest.service.StreamWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,9 @@ public class WriteStreamController {
     @Autowired
     private StreamWriter streamWriter;
 
+    @Autowired
+    private LambdaCaller lambdaCaller;
+
     @PostMapping("/writeToStream")
     public ResponseEntity<String> ingest(@RequestBody WriteStreamRequest writeStreamRequest) {
         logger.info("key is " + writeStreamRequest.getKey());
@@ -36,7 +40,9 @@ public class WriteStreamController {
             return new ResponseEntity<>("partition key not specified", HttpStatus.BAD_REQUEST);
         }
 
-        streamWriter.writeToStream(streamName, partitionKey, writeStreamRequest.getData().getBytes(StandardCharsets.UTF_8));
+        var inputData = writeStreamRequest.getData();
+        var xformed = lambdaCaller.invokeLambda(inputData);
+        streamWriter.writeToStream(streamName, partitionKey, xformed.getBytes(StandardCharsets.UTF_8));
 
         return new ResponseEntity<>("got it", HttpStatus.OK);
     }

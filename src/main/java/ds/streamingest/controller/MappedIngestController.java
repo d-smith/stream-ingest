@@ -3,7 +3,9 @@ package ds.streamingest.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import ds.streamingest.model.PartitionKeyExtractorDescription;
 import ds.streamingest.repository.PartitionKeyExtractorDescRepo;
+import ds.streamingest.service.LambdaCaller;
 import ds.streamingest.service.StreamWriter;
+import lombok.extern.log4j.Log4j2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,14 +18,17 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @RestController
+@Log4j2
 public class MappedIngestController {
-    private final static Logger logger = LoggerFactory.getLogger(MappedIngestController.class);
 
     @Autowired
     private PartitionKeyExtractorDescRepo repository;
 
     @Autowired
     private StreamWriter streamWriter;
+
+    @Autowired
+    private LambdaCaller lambdaCaller;
 
     @PostMapping("/mappedIngest/{streamName}")
     public ResponseEntity<String> ingest(@PathVariable String streamName,
@@ -52,20 +57,23 @@ public class MappedIngestController {
                                                            Map<String, String> headers,
                                                            JsonNode jsonData) throws IOException {
         String key = keyExtractorDesc.getExtractionContext();
-        logger.info(headers.toString());
-        logger.info("looking for header value for {}", key);
+        log.info(headers.toString());
+        log.info("looking for header value for {}", key);
 
         String keyValue = headers.get(key);
         if(keyValue == null) {
-            logger.error("No header value for {} found in request headers",key);
+            log.error("No header value for {} found in request headers",key);
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-        logger.info("write to stream {} with partition key {} and payload {}",
-                streamName, key, jsonData.toString());
+        log.info("write to stream {} with partition key {} and payload {}",
+                streamName, keyValue, jsonData.toString());
 
         //TODO - what's the best way to extract the bytes for the payload?
-        streamWriter.writeToStream(streamName, key, jsonData.toString().getBytes(StandardCharsets.UTF_8));
+        var inputData = jsonData.toString();
+        var xformed = lambdaCaller.invokeLambda(inputData);
+        log.info("lambda returns {}", xformed);
+        streamWriter.writeToStream(streamName, keyValue, xformed.getBytes(StandardCharsets.UTF_8));
 
         return new ResponseEntity<>("got it", HttpStatus.OK);
     }
@@ -80,7 +88,7 @@ public class MappedIngestController {
 
         JsonNode keyNode = jsonData.at(keyExtractorDesc.getExtractionContext());
         if(keyNode == null) {
-            logger.error("Unable to extract value from body to use as partition key");
+            log.error("Unable to extract value from body to use as partition key");
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         //logger.info("extracted {}", keyNode.asText());
